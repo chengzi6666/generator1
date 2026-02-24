@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下载测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .test-container {
+            width: 400px;
+            height: 300px;
+            background-color: #f0f0f0;
+            border: 2px solid #333;
+            margin: 20px 0;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>下载功能测试</h1>
+    
+    <div class="test-container" id="testElement">
+        <h2>测试内容</h2>
+        <p>这是一个测试段落，用于测试下载功能是否正常工作。</p>
+        <div style="width: 150px; height: 150px; background-color: #4CAF50; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+            测试图片
+        </div>
+    </div>
+    
+    <button onclick="testDownload()">测试下载</button>
+    
+    <!-- 引入必要的库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <script>
+        function testDownload() {
+            console.log('开始测试下载...');
+            
+            const element = document.getElementById('testElement');
+            
+            html2canvas(element, {
+                scale: 1.5,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                allowTaint: true
+            }).then(function(canvas) {
+                console.log('Canvas生成成功:', canvas);
+                
+                canvas.toBlob(function(blob) {
+                    console.log('Blob生成成功:', blob);
+                    
+                    if (blob) {
+                        console.log('开始下载...');
+                        saveAs(blob, 'test-download.png');
+                        console.log('下载完成');
+                    } else {
+                        console.error('Blob生成失败');
+                    }
+                });
+            }).catch(function(error) {
+                console.error('生成Canvas时出错:', error);
+            });
+        }
+    </script>
+</body>
+</html>

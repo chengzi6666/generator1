@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        img {
+            max-width: 200px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>CORS修复测试</h1>
+    
+    <div class="test-section">
+        <h2>测试1：背景图片加载</h2>
+        <div id="bg-test" style="width: 300px; height: 200px; border: 1px solid #ccc;"></div>
+        <div id="bg-result" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试2：普通图片加载</h2>
+        <img id="img-test" src="image/bg1.png" alt="测试图片">
+        <div id="img-result" class="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试3：下载功能</h2>
+        <button onclick="testDownload()">测试下载功能</button>
+        <div id="download-result" class="test-result"></div>
+    </div>
+
+    <script>
+        // 测试背景图片加载
+        function testBackgroundImage() {
+            const bgTest = document.getElementById('bg-test');
+            const bgResult = document.getElementById('bg-result');
+            
+            bgTest.style.backgroundImage = 'url("image/bg1.png")';
+            bgTest.style.backgroundSize = 'cover';
+            
+            setTimeout(() => {
+                bgResult.className = 'test-result success';
+                bgResult.textContent = '背景图片加载测试完成';
+            }, 1000);
+        }
+        
+        // 测试普通图片加载
+        function testImageLoad() {
+            const imgTest = document.getElementById('img-test');
+            const imgResult = document.getElementById('img-result');
+            
+            imgTest.onload = function() {
+                imgResult.className = 'test-result success';
+                imgResult.textContent = '普通图片加载成功';
+            };
+            
+            imgTest.onerror = function() {
+                imgResult.className = 'test-result error';
+                imgResult.textContent = '普通图片加载失败';
+            };
+        }
+        
+        // 测试下载功能
+        function testDownload() {
+            const downloadResult = document.getElementById('download-result');
+            
+            // 模拟下载功能测试
+            downloadResult.className = 'test-result success';
+            downloadResult.textContent = '下载功能测试启动，请查看浏览器控制台';
+            
+            // 检查当前协议
+            console.log('当前协议:', window.location.protocol);
+            console.log('是否为file协议:', window.location.protocol.startsWith('file:'));
+        }
+        
+        // 页面加载时执行测试
+        window.onload = function() {
+            testBackgroundImage();
+            testImageLoad();
+            
+            // 输出当前协议信息
+            console.log('当前页面协议:', window.location.protocol);
+            console.log('CORS修复测试开始');
+        };
+    </script>
+</body>
+</html>

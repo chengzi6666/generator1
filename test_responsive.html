@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>响应式测试 - 学习情况报告生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+        }
+        
+        .test-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .device-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .device-btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .device-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .device-btn.active {
+            background-color: #2196F3;
+        }
+        
+        .preview-frame {
+            width: 100%;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: width 0.3s ease;
+        }
+        
+        .preview-frame iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+        
+        .device-info {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .device-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .device-info ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .device-info li {
+            padding: 5px 0;
+            color: #666;
+        }
+        
+        .device-info li span {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .test-results {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .test-results h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .test-results ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .test-results li {
+            padding: 5px 0;
+            color: #856404;
+        }
+        
+        .test-results li:before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .test-results li.issue:before {
+            content: "✗ ";
+            color: #dc3545;
+        }
+        
+        .browser-info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .browser-info h3 {
+            color: #0c5460;
+            margin-bottom: 10px;
+        }
+        
+        .browser-info p {
+            color: #0c5460;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📱 响应式测试 - 学习情况报告生成器</h1>
+        <p>测试报告在不同设备和分辨率下的显示效果</p>
+    </div>
+    
+    <div class="test-container">
+        <div class="browser-info">
+            <h3>🌐 当前浏览器信息</h3>
+            <p><strong>浏览器名称：</strong><span id="browserName">检测中...</span></p>
+            <p><strong>浏览器版本：</strong><span id="browserVersion">检测中...</span></p>
+            <p><strong>用户代理：</strong><span id="userAgent">检测中...</span></p>
+            <p><strong>屏幕分辨率：</strong><span id="screenResolution">检测中...</span></p>
+            <p><strong>窗口尺寸：</strong><span id="windowSize">检测中...</span></p>
+        </div>
+        
+        <div class="device-selector">
+            <button class="device-btn active" data-width="100%" data-device="desktop">🖥️ 桌面端 (100%)</button>
+            <button class="device-btn" data-width="1200px" data-device="laptop">💻 笔记本 (1200px)</button>
+            <button class="device-btn" data-width="992px" data-device="tablet-landscape">📱 平板横屏 (992px)</button>
+            <button class="device-btn" data-width="768px" data-device="tablet-portrait">📱 平板竖屏 (768px)</button>
+            <button class="device-btn" data-width="576px" data-device="mobile-landscape">📱 手机横屏 (576px)</button>
+            <button class="device-btn" data-width="375px" data-device="mobile-portrait">📱 手机竖屏 (375px)</button>
+        </div>
+        
+        <div class="device-info" id="deviceInfo">
+            <h3>📋 当前设备信息</h3>
+            <ul>
+                <li>设备类型：<span id="deviceType">桌面端</span></li>
+                <li>预览宽度：<span id="previewWidth">100%</span></li>
+                <li>推荐用途：<span id="recommendedUse">日常办公、报告生成</span></li>
+            </ul>
+        </div>
+        
+        <div class="preview-frame" id="previewFrame">
+            <iframe src="index.html" title="报告预览"></iframe>
+        </div>
+        
+        <div class="test-results">
+            <h3>✅ 测试检查项</h3>
+            <ul>
+                <li>背景图片是否完整显示</li>
+                <li>柱状图是否正常渲染</li>
+                <li>表格内容是否清晰可读</li>
+                <li>班主任头像是否正确显示</li>
+                <li>文字点评是否布局合理</li>
+                <li>所有按钮和控件是否可点击</li>
+                <li>页面滚动是否流畅</li>
+                <li>图片和文字是否对齐</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // 获取浏览器信息
+        function getBrowserInfo() {
+            const ua = navigator.userAgent;
+            let browserName = '未知浏览器';
+            let browserVersion = '未知版本';
+            
+            if (ua.indexOf('Chrome') > -1) {
+                browserName = 'Chrome';
+                browserVersion = ua.match(/Chrome\/(\d+\.\d+\.\d+\.\d+)/)[1];
+            } else if (ua.indexOf('Firefox') > -1) {
+                browserName = 'Firefox';
+                browserVersion = ua.match(/Firefox\/(\d+\.\d+)/)[1];
+            } else if (ua.indexOf('Safari') > -1) {
+                browserName = 'Safari';
+                browserVersion = ua.match(/Version\/(\d+\.\d+)/)[1];
+            } else if (ua.indexOf('Edge') > -1) {
+                browserName = 'Edge';
+                browserVersion = ua.match(/Edge\/(\d+\.\d+\.\d+\.\d+)/)[1];
+            }
+            
+            return { browserName, browserVersion, userAgent: ua };
+        }
+        
+        // 设备信息
+        const deviceInfo = {
+            'desktop': {
+                name: '桌面端',
+                use: '日常办公、报告生成'
+            },
+            'laptop': {
+                name: '笔记本',
+                use: '移动办公、报告生成'
+            },
+            'tablet-landscape': {
+                name: '平板横屏',
+                use: '移动办公、报告预览'
+            },
+            'tablet-portrait': {
+                name: '平板竖屏',
+                use: '移动办公、报告预览'
+            },
+            'mobile-landscape': {
+                name: '手机横屏',
+                use: '移动查看、简单操作'
+            },
+            'mobile-portrait': {
+                name: '手机竖屏',
+                use: '移动查看、简单操作'
+            }
+        };
+        
+        // 显示浏览器信息
+        function displayBrowserInfo() {
+            const browser = getBrowserInfo();
+            document.getElementById('browserName').textContent = browser.browserName;
+            document.getElementById('browserVersion').textContent = browser.browserVersion;
+            document.getElementById('userAgent').textContent = browser.userAgent.substring(0, 100) + '...';
+            document.getElementById('screenResolution').textContent = `${screen.width} x ${screen.height}`;
+            document.getElementById('windowSize').textContent = `${window.innerWidth} x ${window.innerHeight}`;
+        }
+        
+        // 设备选择器事件
+        const deviceBtns = document.querySelectorAll('.device-btn');
+        const previewFrame = document.getElementById('previewFrame');
+        
+        deviceBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // 移除所有按钮的active类
+                deviceBtns.forEach(b => b.classList.remove('active'));
+                // 添加当前按钮的active类
+                this.classList.add('active');
+                
+                // 获取设备信息
+                const width = this.getAttribute('data-width');
+                const device = this.getAttribute('data-device');
+                
+                // 更新预览宽度
+                previewFrame.style.width = width;
+                
+                // 更新设备信息
+                const info = deviceInfo[device];
+                document.getElementById('deviceType').textContent = info.name;
+                document.getElementById('previewWidth').textContent = width;
+                document.getElementById('recommendedUse').textContent = info.use;
+            });
+        });
+        
+        // 窗口大小变化时更新信息
+        window.addEventListener('resize', function() {
+            document.getElementById('windowSize').textContent = `${window.innerWidth} x ${window.innerHeight}`;
+        });
+        
+        // 页面加载完成后显示信息
+        window.onload = function() {
+            displayBrowserInfo();
+            console.log('响应式测试页面加载完成');
+        };
+    </script>
+</body>
+</html>

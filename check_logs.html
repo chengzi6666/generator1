@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查看操作日志</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .log-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        h2 {
+            color: #555;
+            margin-top: 0;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>查看王天晟的操作日志</h1>
+        
+        <div class="log-section">
+            <h2>1. 学员操作记录</h2>
+            <button onclick="checkStudentOperationRecords()">查看学员操作记录</button>
+            <pre id="studentOperationRecords"></pre>
+        </div>
+        
+        <div class="log-section">
+            <h2>2. 王天晟的具体记录</h2>
+            <button onclick="checkWangTianshengRecords()">查看王天晟的记录</button>
+            <pre id="wangtianshengRecords"></pre>
+        </div>
+        
+        <div class="log-section">
+            <h2>3. 操作日志</h2>
+            <button onclick="checkOperationLogs()">查看操作日志</button>
+            <pre id="operationLogs"></pre>
+        </div>
+        
+        <div class="log-section">
+            <h2>4. 本地存储所有数据</h2>
+            <button onclick="checkAllLocalStorage()">查看所有本地存储数据</button>
+            <pre id="allLocalStorage"></pre>
+        </div>
+    </div>
+    
+    <script>
+        function checkStudentOperationRecords() {
+            const records = localStorage.getItem('student_operation_records');
+            const output = document.getElementById('studentOperationRecords');
+            if (records) {
+                try {
+                    const parsed = JSON.parse(records);
+                    output.textContent = JSON.stringify(parsed, null, 2);
+                } catch (e) {
+                    output.textContent = '解析失败: ' + e.message;
+                }
+            } else {
+                output.textContent = '未找到学员操作记录';
+            }
+        }
+        
+        function checkWangTianshengRecords() {
+            const records = localStorage.getItem('student_operation_records');
+            const output = document.getElementById('wangtianshengRecords');
+            if (records) {
+                try {
+                    const parsed = JSON.parse(records);
+                    const wangtiansheng = parsed['王天晟'] || parsed['王天晟'] || '未找到';
+                    if (wangtiansheng !== '未找到') {
+                        output.textContent = JSON.stringify(wangtiansheng, null, 2);
+                    } else {
+                        // 尝试从report_generator_state中查找
+                        const state = localStorage.getItem('report_generator_state');
+                        if (state) {
+                            const stateParsed = JSON.parse(state);
+                            if (stateParsed.studentOperationRecords && stateParsed.studentOperationRecords['王天晟']) {
+                                output.textContent = JSON.stringify(stateParsed.studentOperationRecords['王天晟'], null, 2);
+                            } else {
+                                output.textContent = '未找到王天晟的记录';
+                            }
+                        } else {
+                            output.textContent = '未找到王天晟的记录';
+                        }
+                    }
+                } catch (e) {
+                    output.textContent = '解析失败: ' + e.message;
+                }
+            } else {
+                output.textContent = '未找到学员操作记录';
+            }
+        }
+        
+        function checkOperationLogs() {
+            const logs = localStorage.getItem('operation_logs');
+            const output = document.getElementById('operationLogs');
+            if (logs) {
+                try {
+                    const parsed = JSON.parse(logs);
+                    // 过滤出王天晟的日志
+                    const wangtianshengLogs = parsed.filter(log => {
+                        return log.details && (log.details.student === '王天晟' || log.details.studentName === '王天晟');
+                    });
+                    if (wangtianshengLogs.length > 0) {
+                        output.textContent = JSON.stringify(wangtianshengLogs, null, 2);
+                    } else {
+                        output.textContent = '未找到王天晟的操作日志';
+                    }
+                } catch (e) {
+                    output.textContent = '解析失败: ' + e.message;
+                }
+            } else {
+                output.textContent = '未找到操作日志';
+            }
+        }
+        
+        function checkAllLocalStorage() {
+            const output = document.getElementById('allLocalStorage');
+            const data = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                try {
+                    data[key] = JSON.parse(value);
+                } catch (e) {
+                    data[key] = value;
+                }
+            }
+            output.textContent = JSON.stringify(data, null, 2);
+        }
+        
+        // 页面加载时自动检查
+        window.onload = function() {
+            checkWangTianshengRecords();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习情况报告生成器</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 隐藏右侧预览面板中的文字点评卡片，因为已经移动到左侧操作面板 */
+        .right-panel .comment-card {
+            display: none !important;
+        }
+        
+        @font-face {
+            font-family: 'PingFangSanShengTi';
+            src: url('transfonter.org/PingFangSanShengTi.woff2') format('woff2'),
+                 url('transfonter.org/PingFangSanShengTi.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'SJjnyyjyy';
+            src: url('transfonter.org/SJjnyyjyy.woff2') format('woff2'),
+                 url('transfonter.org/SJjnyyjyy.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'dingliexidafont';
+            src: url('transfonter.org/dingliexidafont.woff2') format('woff2'),
+                 url('transfonter.org/dingliexidafont.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'huangkaihuaLawyerfont';
+            src: url('transfonter.org/huangkaihuaLawyerfont.woff2') format('woff2'),
+                 url('transfonter.org/huangkaihuaLawyerfont.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'pingfangchangan';
+            src: url('transfonter.org/pingfangchangan.woff2') format('woff2'),
+                 url('transfonter.org/pingfangchangan.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'pingfanggongzi';
+            src: url('transfonter.org/pingfanggongzi.woff2') format('woff2'),
+                 url('transfonter.org/pingfanggongzi.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'pingfangjiangnan';
+            src: url('transfonter.org/pingfangjiangnan.woff2') format('woff2'),
+                 url('transfonter.org/pingfangjiangnan.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'pingfangshaohua';
+            src: url('transfonter.org/pingfangshaohua.woff2') format('woff2'),
+                 url('transfonter.org/pingfangshaohua.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'pingfangyingfeng';
+            src: url('transfonter.org/pingfangyingfeng.woff2') format('woff2'),
+                 url('transfonter.org/pingfangyingfeng.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <h1>学习情况报告生成器</h1>
+            <p>轻松生成专业的学习情况报告，记录孩子的成长历程</p>
+        </header>
+        
+        <div class="main-content">
+            <!-- 左侧操作面板 -->
+            <div class="left-panel">
+                <!-- 文件上传卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📁 文件上传 <span class="toggle-icon">▼</span></h2>
+                    </div>
+                    <div class="card-body">
+                        <input type="file" id="csvFiles" multiple accept=".csv" class="file-input" />
+                        <p class="hint">请上传6-7个CSV表格文件</p>
+                        <div id="fileList" class="file-list"></div>
+                    </div>
+                </div>
+                
+                <!-- 批量操作卡片 -->
+                <div class="card" style="display: none;">
+                    <div class="card-header">
+                        <h2>⚡ 批量操作 <span class="toggle-icon">▼</span></h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="setting-item">
+                            <label>&nbsp;</label>
+                            <div class="batch-operation-container">
+                                <button id="batchOperationBtn" class="batch-btn">批量操作 ▼</button>
+                                <div id="batchOperationMenu" class="batch-menu" style="display: none;">
+                                    <div class="batch-menu-item" data-action="single">学员单个操作</div>
+                                    <div class="batch-menu-item" data-action="batch">学员批量操作</div>
+                                </div>
+                                <div class="batch-operation-note"><span class="highlight">系统默认为：批量操作模式，</span>若需修改单个学员，请从下拉栏选择【单个操作】~</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 文字点评卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>💬 文字点评 <span class="toggle-icon">▼</span></h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- 班主任姓名和头像 -->
+                        <div class="comment-section">
+                            <div class="teacher-info-row">
+                                <div class="teacher-name-group">
+                                    <label for="teacherName">班主任姓名 *</label>
+                                    <input type="text" id="teacherName" placeholder="请输入您的姓名" class="text-input">
+                                    <div id="teacherNameError" class="error-message"></div>
+                                </div>
+                                <div class="avatar-upload">
+                                    <div class="avatar-preview">
+                                        <img id="avatarPreview" src="" alt="班主任头像" class="avatar-image">
+                                    </div>
+                                    <div class="avatar-actions">
+                                        <input type="file" id="avatarUpload" accept="image/jpeg,image/png" class="file-input" style="display: none;">
+                                        <button type="button" id="selectAvatarBtn" class="btn-secondary">选择文件</button>
+                                        <button type="button" id="editAvatarBtn" class="btn-secondary">编辑头像</button>
+                                    </div>
+                                    <div id="avatarUploadError" class="error-message"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 班主任寄语 -->
+                        <div class="comment-section">
+                            <label>班主任寄语</label>
+                            <div class="comment-generator">
+                                <div class="button-group">
+                                    <button type="button" id="generateCommentBtn2" class="refresh-comment-btn">刷新评语</button>
+                                    <button type="button" id="regenerateCommentBtn2" class="btn-secondary" style="display: none;">重新生成</button>
+                                </div>
+                                <div id="commentLoading" class="loading-indicator" style="display: none;">生成中...</div>
+                                <div id="commentResult" class="comment-result" contenteditable="true"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 操作控件 -->
+                        <div class="comment-section">
+                            <label>操作控制</label>
+                            <div class="control-panel">
+                                <div class="control-group">
+                                    <label>缩放：</label>
+                                    <button type="button" id="zoomOutBtn" class="btn-secondary">缩小</button>
+                                    <button type="button" id="zoomInBtn" class="btn-secondary">放大</button>
+                                    <span id="zoomLevel">100%</span>
+                                </div>
+                                <div class="control-group">
+                                    <label>位置：</label>
+                                    <button type="button" id="moveUpBtn" class="btn-secondary">↑</button>
+                                    <button type="button" id="moveDownBtn" class="btn-secondary">↓</button>
+                                    <button type="button" id="moveLeftBtn" class="btn-secondary">←</button>
+                                    <button type="button" id="moveRightBtn" class="btn-secondary">→</button>
+                                </div>
+                                <!-- 字体设置 -->
+                                <div class="control-group">
+                                    <label>字体：</label>
+                                    <select id="commentFontSelect" class="select-input small-select">
+                                        <option value="PingFangSanShengTi">平方三声体</option>
+                                        <option value="SJjnyyjyy">时间记忆</option>
+                                        <option value="dingliexidafont">鼎力大侠</option>
+                                        <option value="huangkaihuaLawyerfont">黄开华律师</option>
+                                        <option value="pingfangchangan">平方长安</option>
+                                        <option value="pingfanggongzi">平方公子</option>
+                                        <option value="pingfangjiangnan">平方江南</option>
+                                        <option value="pingfangshaohua">平方韶华</option>
+                                        <option value="pingfangyingfeng">平方迎风</option>
+                                    </select>
+                                </div>
+                                <div class="control-group">
+                                    <label>字体颜色：</label>
+                                    <input type="color" id="commentFontColor" value="#333333" class="color-input small-color" />
+                                    <span id="commentFontColorValue" class="color-value small-color-value">#333333</span>
+                                </div>
+                                <div class="control-group">
+                                    <label>字体加粗：</label>
+                                    <input type="checkbox" id="commentFontBold" class="checkbox" />
+                                    <span>启用加粗</span>
+                                </div>
+                                <div class="control-group">
+                                    <label>字体大小：</label>
+                                    <input type="range" id="commentFontSize" min="12" max="36" value="16" class="range-input" style="width: 80px;" />
+                                    <span id="commentFontSizeValue" class="range-value">16px</span>
+                                </div>
+                                <div class="control-group">
+                                    <label>文字框底色：</label>
+                                    <input type="color" id="commentBackgroundColor" value="#f9f9f9" class="color-input small-color" />
+                                    <span id="commentBackgroundColorValue" class="color-value small-color-value">#f9f9f9</span>
+                                </div>
+                                <div class="control-group">
+                                    <label>&nbsp;</label>
+                                    <button id="commentBackgroundColorTransparent" class="color-button">透明</button>
+                                </div>
+                                <div class="control-group">
+                                    <label>边框样式：</label>
+                                    <select id="commentBorderStyle" class="select-input small-select">
+                                        <option value="solid">实线</option>
+                                        <option value="dashed">虚线</option>
+                                        <option value="dotted">点线</option>
+                                        <option value="double">双线</option>
+                                        <option value="none">无边框</option>
+                                    </select>
+                                </div>
+                                <div class="control-group">
+                                    <label>边框颜色：</label>
+                                    <input type="color" id="commentBorderColor" value="#cccccc" class="color-input small-color" />
+                                    <span id="commentBorderColorValue" class="color-value small-color-value">#cccccc</span>
+                                </div>
+                                <div class="control-group">
+                                    <label>边框宽度：</label>
+                                    <input type="range" id="commentBorderWidth" min="1" max="10" value="1" class="range-input" style="width: 80px;" />
+                                    <span id="commentBorderWidthValue" class="range-value">1px</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 恢复按钮 -->
+                        <div class="comment-section">
+                            <button type="button" id="restoreCommentBtn" class="btn-secondary" style="display: none;">↩️ 恢复已删除的文字点评</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 学员列表卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>👥 学员列表 <span class="toggle-icon">▼</span></h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="setting-item">
+                            <label>搜索学员：</label>
+                            <input type="text" id="studentSearch" placeholder="输入学员姓名搜索" class="text-input" />
+                        </div>
+                        <div id="studentList" class="student-list">
+                            <p class="hint">请先上传CSV文件</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 参数设置卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>⚙️ 参数设置 <span class="toggle-icon">▼</span></h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- 姓名处理 -->
+                        <div class="setting-item">
+                            <label>姓名处理：</label>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="useLastName" class="checkbox" />
+                                <span>当姓名大于2字时，取后两个字</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 描述文字编辑 -->
+                        <div class="setting-item">
+                            <label>【1】听课情况描述：</label>
+                            <input type="text" id="desc1" value="每讲认真完课" class="text-input" />
+                        </div>
+                        <div class="setting-item">
+                            <label>【2】互动题情况描述：</label>
+                            <input type="text" id="desc2" value="每讲互动题参与率和正确率都很高" class="text-input" />
+                        </div>
+                        <div class="setting-item">
+                            <label>【3】创作情况描述：</label>
+                            <input type="text" id="desc3" value="认真完成创作" class="text-input" />
+                        </div>
+                        
+                        <!-- 背景图片选择 -->
+                        <div class="setting-item">
+                            <label>背景图片：</label>
+                            <select id="bgSelect" class="select-input">
+                                <option value="image/bg1.png">背景1</option>
+                                <option value="image/bg2.png">背景2</option>
+                                <option value="image/bg3.png">背景3</option>
+                            </select>
+                            <button type="button" id="customBgUploadBtn" class="btn-secondary" style="margin-left: 10px;">自定义上传</button>
+                        </div>
+                        
+                        <!-- 自定义背景图片上传区域 -->
+                        <div id="customBgUploadArea" style="display: none;">
+                            <div class="setting-item">
+                                <label>选择图片：</label>
+                                <input type="file" id="customBgFileInput" accept="image/jpeg,image/png,image/webp" class="file-input" />
+                                <span id="uploadStatus" class="upload-status"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- 字体选择 -->
+                        <div class="setting-item">
+                            <label>字体选择：</label>
+                            <select id="fontSelect" class="select-input">
+                                <option value="PingFangSanShengTi">平方三声体</option>
+                                <option value="SJjnyyjyy">时间记忆</option>
+                                <option value="dingliexidafont">鼎力大侠</option>
+                                <option value="huangkaihuaLawyerfont">黄开华律师</option>
+                                <option value="pingfangchangan">平方长安</option>
+                                <option value="pingfanggongzi">平方公子</option>
+                                <option value="pingfangjiangnan">平方江南</option>
+                                <option value="pingfangshaohua">平方韶华</option>
+                                <option value="pingfangyingfeng">平方迎风</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 字体颜色选择 -->
+                        <div class="setting-item">
+                            <label>字体颜色：</label>
+                            <div class="color-control">
+                                <input type="color" id="fontColor" value="#333333" class="color-input" />
+                                <span id="fontColorValue" class="color-value">#333333</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 字体加粗选项 -->
+                        <div class="setting-item">
+                            <label>字体加粗：</label>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="fontBold" class="checkbox" />
+                                <span>启用字体加粗效果</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 板块调整卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📐 板块调整 <span class="toggle-icon">▼</span></h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- 板块大小调整 -->
+                        <div class="setting-item">
+                            <label>【1】听课情况板块大小：</label>
+                            <div class="range-control">
+                                <input type="range" id="section1Size" min="0" max="100" value="50" class="range-input" />
+                                <span class="range-value">50%</span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>【2】互动题情况板块大小：</label>
+                            <div class="range-control">
+                                <input type="range" id="section2Size" min="0" max="100" value="50" class="range-input" />
+                                <span class="range-value">50%</span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>【3】创作情况板块大小：</label>
+                            <div class="range-control">
+                                <input type="range" id="section3Size" min="0" max="100" value="50" class="range-input" />
+                                <span class="range-value">50%</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 板块移动 -->
+                        <div class="setting-item">
+                            <label>听课情况板块：</label>
+                            <div class="button-group">
+                                <button id="moveSection1Up" class="move-btn">↑</button>
+                                <button id="moveSection1Down" class="move-btn">↓</button>
+                                <button id="moveSection1Left" class="move-btn">←</button>
+                                <button id="moveSection1Right" class="move-btn">→</button>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>互动题情况板块：</label>
+                            <div class="button-group">
+                                <button id="moveSection2Up" class="move-btn">↑</button>
+                                <button id="moveSection2Down" class="move-btn">↓</button>
+                                <button id="moveSection2Left" class="move-btn">←</button>
+                                <button id="moveSection2Right" class="move-btn">→</button>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>创作情况板块：</label>
+                            <div class="button-group">
+                                <button id="moveSection3Up" class="move-btn">↑</button>
+                                <button id="moveSection3Down" class="move-btn">↓</button>
+                                <button id="moveSection3Left" class="move-btn">←</button>
+                                <button id="moveSection3Right" class="move-btn">→</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 表格调整 -->
+                        <div class="setting-item" style="display: none;">
+                            <label>表格大小：</label>
+                            <div class="range-control">
+                                <input type="range" id="tableSize" min="50" max="150" value="100" class="range-input" />
+                                <span class="range-value">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 标题调整卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🎨 标题调整 <span class="toggle-icon">▼</span></h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="setting-item">
+                            <label>标题文本内容：</label>
+                            <input type="text" id="titleText" value="{name}宝贝学习情况" placeholder="输入标题文本，{name}会自动替换为学员姓名" class="text-input" />
+                            <div class="hint">提示：使用 {name} 作为占位符，会自动替换为当前学员姓名</div>
+                        </div>
+                        <div class="setting-item">
+                            <label>标题字体大小：</label>
+                            <div class="range-control">
+                                <input type="range" id="titleFontSize" min="20" max="60" value="36" class="range-input" />
+                                <span id="titleFontSizeValue" class="range-value">36px</span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>标题上下位置：</label>
+                            <div class="range-control">
+                                <input type="range" id="titleTopPosition" min="-100" max="100" value="0" class="range-input" />
+                                <span id="titleTopPositionValue" class="range-value">0px</span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>标题左右位置：</label>
+                            <div class="range-control">
+                                <input type="range" id="titleLeftPosition" min="-100" max="100" value="0" class="range-input" />
+                                <span id="titleLeftPositionValue" class="range-value">0px</span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>标题字体颜色：</label>
+                            <div class="color-control">
+                                <input type="color" id="titleFontColor" value="#333333" class="color-input" />
+                                <span id="titleFontColorValue" class="color-value">#333333</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 第一部分柱状图调整卡片 -->
+                <div class="card" id="chart-settings">
+                    <div class="card-header">
+                        <h2>📊 第一部分柱状图调整 <span class="toggle-icon">▼</span></h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="setting-item">
+                            <label>柱状图颜色：</label>
+                            <div class="color-control">
+                                <input type="color" id="chartColor" value="#4CAF50" class="color-input" />
+                                <span id="chartColorValue" class="color-value">#4CAF50</span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>贴纸颜色：</label>
+                            <div class="color-control">
+                                <input type="color" id="thumbColor" value="#FFD700" class="color-input" />
+                                <span id="thumbColorValue" class="color-value">#FFD700</span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>贴纸样式：</label>
+                            <select id="stickerStyle" class="select-input">
+                                <option value="thumb">大拇指</option>
+                                <option value="flag">小红旗</option>
+                                <option value="flower">小红花</option>
+                                <option value="star">星星</option>
+                                <option value="medal">奖牌</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>贴纸位置调整：</label>
+                            <div class="button-group">
+                                <button type="button" id="stickerZoomInBtn" class="control-btn">放大</button>
+                                <button type="button" id="stickerZoomOutBtn" class="control-btn">缩小</button>
+                                <button type="button" id="stickerMoveUpBtn" class="control-btn">↑</button>
+                                <button type="button" id="stickerMoveDownBtn" class="control-btn">↓</button>
+                                <button type="button" id="stickerMoveLeftBtn" class="control-btn">←</button>
+                                <button type="button" id="stickerMoveRightBtn" class="control-btn">→</button>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>柱状图调整：</label>
+                            <div class="button-group">
+                                <button type="button" id="chartZoomInBtn" class="control-btn">放大</button>
+                                <button type="button" id="chartZoomOutBtn" class="control-btn">缩小</button>
+                                <button type="button" id="chartMoveUpBtn" class="control-btn">↑</button>
+                                <button type="button" id="chartMoveDownBtn" class="control-btn">↓</button>
+                                <button type="button" id="chartMoveLeftBtn" class="control-btn">←</button>
+                                <button type="button" id="chartMoveRightBtn" class="control-btn">→</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 第二部分表格调整卡片 -->
+                <div class="card" id="table-settings">
+                    <div class="card-header">
+                        <h2>📊 第二部分表格调整 <span class="toggle-icon">▼</span></h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="setting-item">
+                            <div class="color-control">
+                                <label>表格底色：</label>
+                                <input type="color" id="tableBackgroundColor" value="#FFFFFF" class="color-input" />
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>&nbsp;</label>
+                            <button id="tableBackgroundColorValue" class="color-button">透明</button>
+                        </div>
+                        <div class="setting-item">
+                            <label>表格内容对齐：</label>
+                            <select id="tableAlignment" class="select-input">
+                                <option value="left">左对齐</option>
+                                <option value="center">居中对齐</option>
+                                <option value="right">右对齐</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>表格字体大小：</label>
+                            <div class="range-control">
+                                <input type="range" id="tableFontSize" min="0" max="50" value="6" class="range-input" />
+                                <span id="tableFontSizeValue" class="range-value">6px</span>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>表格调整：</label>
+                            <div class="button-group">
+                                <button type="button" id="tableZoomInBtn" class="control-btn">放大</button>
+                                <button type="button" id="tableZoomOutBtn" class="control-btn">缩小</button>
+                                <button type="button" id="tableMoveUpBtn" class="control-btn">↑</button>
+                                <button type="button" id="tableMoveDownBtn" class="control-btn">↓</button>
+                                <button type="button" id="tableMoveLeftBtn" class="control-btn">←</button>
+                                <button type="button" id="tableMoveRightBtn" class="control-btn">→</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 图片设置卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🖼️ 第三部分图片设置 <span class="toggle-icon">▼</span></h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="setting-item hidden-image-settings" style="display: none;">
+                            <label>图片大小：</label>
+                            <div class="range-control">
+                                <input type="range" id="imageSize" min="0" max="200" value="50" class="range-input" />
+                                <span id="imageSizeValue" class="range-value">50%</span>
+                            </div>
+                        </div>
+                        <div class="setting-item hidden-image-settings" style="display: none;">
+                            <label>图片上下位置：</label>
+                            <div class="range-control">
+                                <input type="range" id="imageTopPosition" min="-500" max="500" value="-20" class="range-input" />
+                                <span id="imageTopPositionValue" class="range-value">-20px</span>
+                            </div>
+                        </div>
+                        <div class="setting-item hidden-image-settings" style="display: none;">
+                            <label>图片左右位置：</label>
+                            <div class="range-control">
+                                <input type="range" id="imageLeftPosition" min="-100" max="500" value="0" class="range-input" />
+                                <span id="imageLeftPositionValue" class="range-value">0px</span>
+                            </div>
+                        </div>
+                        <div class="setting-item" style="display: none;">
+                            <label>图片布局模式：</label>
+                            <div class="button-group">
+                                <button type="button" id="singleColumnBtn" class="layout-btn" style="display: none;">单列布局</button>
+                                <button type="button" id="doubleColumnBtn" class="layout-btn active">双列布局</button>
+                            </div>
+                            <input type="hidden" id="imageLayoutMode" value="double" />
+                        </div>
+                        <div class="setting-item">
+                            <label><span class="highlight">整体图片控制：</span></label>
+                            <div class="button-group">
+                                <button type="button" id="imageZoomInBtn" class="control-btn">放大</button>
+                                <button type="button" id="imageZoomOutBtn" class="control-btn">缩小</button>
+                                <button type="button" id="imageMoveUpBtn" class="control-btn">↑</button>
+                                <button type="button" id="imageMoveDownBtn" class="control-btn">↓</button>
+                                <button type="button" id="imageMoveLeftBtn" class="control-btn">←</button>
+                                <button type="button" id="imageMoveRightBtn" class="control-btn">→</button>
+                            </div>
+                        </div>
+                        <div class="setting-item hidden-image-settings">
+
+                            <div class="button-group">
+                            </div>
+                        </div>
+
+                        <!-- 图片智能匹配按钮 -->
+                        <div class="setting-item">
+                            <label>&nbsp;</label>
+                            <button id="smartImageMatchBtn" class="download-btn" style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-top: 5px;">🤖 图片智能匹配</button>
+                        </div>
+
+                        <!-- 检查缺失图片按钮 -->
+                        <div class="setting-item">
+                            <label>&nbsp;</label>
+                            <button id="checkMissingImagesBtn" class="download-btn" style="background-color: #FF9800; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-top: 5px;">🔍 检查缺失图片</button>
+                        </div>
+                        <!-- 单个图片操作功能 -->
+                        <div class="setting-item">
+                            <label><span class="highlight">单个图片操作：</span></label>
+                            <div class="image-operation-container">
+                                <div class="setting-item">
+                                    <label>选择图片：</label>
+                                    <select id="imageSelector" class="select-input">
+                                        <option value="">请选择图片</option>
+                                    </select>
+                                </div>
+                                <div class="setting-item">
+                                    <label>图片大小：</label>
+                                    <div class="range-control">
+                                        <input type="range" id="singleImageSize" min="50" max="200" value="100" class="range-input" />
+                                        <span id="singleImageSizeValue" class="range-value">100%</span>
+                                    </div>
+                                </div>
+                                <div class="setting-item">
+                                    <label>上下位置：</label>
+                                    <div class="range-control">
+                                        <input type="range" id="singleImageTop" min="-500" max="200" value="0" class="range-input" />
+                                        <span id="singleImageTopValue" class="range-value">0px</span>
+                                    </div>
+                                </div>
+                                <div class="setting-item">
+                                    <label>左右位置：</label>
+                                    <div class="range-control">
+                                        <input type="range" id="singleImageLeft" min="-100" max="500" value="0" class="range-input" />
+                                        <span id="singleImageLeftValue" class="range-value">0px</span>
+                                    </div>
+                                </div>
+                                <div class="setting-item">
+                                    <label>快捷操作：</label>
+                                    <div class="button-group">
+                                        <button id="singleImageSizeDown" class="size-btn">缩小</button>
+                                        <button id="singleImageSizeUp" class="size-btn">放大</button>
+                                        <button id="singleImageMoveUp" class="move-btn">↑</button>
+                                        <button id="singleImageMoveDown" class="move-btn">↓</button>
+                                        <button id="singleImageMoveLeft" class="move-btn">←</button>
+                                        <button id="singleImageMoveRight" class="move-btn">→</button>
+                                    </div>
+                                </div>
+                                <div class="setting-item">
+                                    <label>&nbsp;</label>
+                                    <button id="clearCacheImagesBtn" class="download-btn" style="display: none; background-color: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-top: 5px;">🗑️ 清空缓存图片</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="setting-item" style="display: none;">
+                            <label>上传图片（最多10张）：</label>
+                            <input type="file" id="customImages" multiple accept="image/*" class="file-input" />
+                        </div>
+                        <div class="setting-item">
+                            <label>&nbsp;</label>
+                            <button id="applyAllImagesBtn" class="download-btn" style="display: none; background-color: #2196F3; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-top: 5px;">📋 全部应用</button>
+                        </div>
+                        <div class="setting-item" style="display: none;">
+                            <label>已上传图片：</label>
+                            <div id="imageList" class="image-list"></div>
+                        </div>
+                        <div class="setting-item">
+                            <label>&nbsp;</label>
+                            <button id="undoDeleteBtn" class="download-btn" style="display: none; background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 10px;">↩️ 撤销删除</button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 下载功能卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📥 下载功能 <span class="toggle-icon">▼</span></h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="setting-item">
+                            <label>&nbsp;</label>
+                            <button id="downloadCurrentImageBtn" class="download-btn" style="background-color: #2196F3; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-top: 5px; width: 100%;">📥 下载当前图片</button>
+                        </div>
+                        <div class="setting-item">
+                            <label>&nbsp;</label>
+                            <button id="downloadAllImagesBtn" class="download-btn" style="background-color: #4CAF50; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; margin-top: 5px; width: 100%;">📦 下载所有图片（zip）</button>
+                        </div>
+                        <div id="downloadProgressContainer" style="display: none;">
+                            <div class="setting-item">
+                                <label>下载进度：</label>
+                                <div class="progress-bar-container">
+                                    <div id="downloadProgressBar" class="progress-bar" style="width: 0%;"></div>
+                                </div>
+                                <span id="downloadProgressText" class="progress-text">0%</span>
+                            </div>
+                        </div>
+                        <div id="downloadStatus" class="download-status" style="display: none;"></div>
+                    </div>
+                </div>
+
+
+            </div>
+            
+            <!-- 右侧预览面板 -->
+            <div class="right-panel">
+                <div class="card preview-card">
+                    <div class="card-header">
+                        <h2>👁️ 预览</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="preview-container">
+                            <div id="reportPreview" class="report"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 文字点评卡片 -->
+                <div class="card comment-card">
+                    <div class="card-header">
+                        <h2>💬 文字点评</h2>
+                    </div>
+                    <div class="card-body">
+                        <!-- 班主任姓名和头像 -->
+                        <div class="comment-section">
+                            <div class="teacher-info-row">
+                                <div class="teacher-name-group">
+                                    <label for="teacherName">班主任姓名 *</label>
+                                    <input type="text" id="teacherName" placeholder="请输入您的姓名" class="form-input">
+                                    <div id="teacherNameError" class="error-message"></div>
+                                </div>
+                                <div class="avatar-upload">
+                                    <div class="avatar-preview">
+                                        <img id="avatarPreview" src="" alt="班主任头像" class="avatar-image">
+                                    </div>
+                                    <div class="avatar-actions">
+                                        <input type="file" id="avatarUpload" accept="image/jpeg,image/png" class="file-input" style="display: none;">
+                                        <button type="button" id="selectAvatarBtn" class="btn-secondary">选择文件</button>
+                                        <button type="button" id="editAvatarBtn" class="btn-secondary">编辑头像</button>
+                                    </div>
+                                    <div id="avatarUploadError" class="error-message"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 班主任寄语 -->
+                        <div class="comment-section">
+                            <label>班主任寄语</label>
+                            <div class="comment-generator">
+                                <div class="button-group">
+                                    <button type="button" id="generateCommentBtn" class="btn-primary">刷新评语</button>
+                                    <button type="button" id="regenerateCommentBtn" class="btn-secondary" style="display: none;">重新生成</button>
+                                </div>
+                                <div id="commentLoading" class="loading-indicator" style="display: none;">生成中...</div>
+                                <div id="commentResult" class="comment-result" contenteditable="true"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 操作控件 -->
+                        <div class="comment-section">
+                            <label>操作控制</label>
+                            <div class="control-panel">
+                                <div class="control-group">
+                                    <label>缩放：</label>
+                                    <button type="button" id="zoomOutBtn" class="btn-secondary">缩小</button>
+                                    <button type="button" id="zoomInBtn" class="btn-secondary">放大</button>
+                                    <span id="zoomLevel">100%</span>
+                                </div>
+                                <div class="control-group">
+                                    <label>位置：</label>
+                                    <button type="button" id="moveUpBtn" class="btn-secondary">↑</button>
+                                    <button type="button" id="moveDownBtn" class="btn-secondary">↓</button>
+                                    <button type="button" id="moveLeftBtn" class="btn-secondary">←</button>
+                                    <button type="button" id="moveRightBtn" class="btn-secondary">→</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 恢复按钮 -->
+                        <div class="comment-section">
+                            <button type="button" id="restoreCommentBtn" class="btn-secondary" style="display: none;">↩️ 恢复已删除的文字点评</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 头像编辑模态框 -->
+        <div id="avatarEditorModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>编辑头像</h3>
+                    <button type="button" class="close-modal" id="closeAvatarEditor">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="editor-container">
+                        <div class="canvas-container">
+                            <canvas id="avatarCanvas"></canvas>
+                            <div id="cropOverlay" class="crop-overlay"></div>
+                        </div>
+                        <div class="editor-controls">
+                            <div class="control-group">
+                                <label>剪裁：</label>
+                                <button type="button" id="enableCropBtn" class="btn-secondary">启用剪裁</button>
+                                <button type="button" id="applyCropBtn" class="btn-secondary" style="display: none;">应用剪裁</button>
+                            </div>
+                            <div class="control-group">
+                                <label>缩放：</label>
+                                <input type="range" id="avatarScale" min="0" max="200" value="100" class="range-input">
+                                <span id="avatarScaleValue">100%</span>
+                            </div>
+                            <div class="control-group">
+                                <label>旋转：</label>
+                                <input type="range" id="avatarRotate" min="0" max="360" value="0" class="range-input">
+                                <span id="avatarRotateValue">0°</span>
+                            </div>
+                            <div class="control-group">
+                                <label>亮度：</label>
+                                <input type="range" id="avatarBrightness" min="0" max="200" value="100" class="range-input">
+                                <span id="avatarBrightnessValue">100%</span>
+                            </div>
+                            <div class="control-group">
+                                <label>对比度：</label>
+                                <input type="range" id="avatarContrast" min="0" max="200" value="100" class="range-input">
+                                <span id="avatarContrastValue">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="resetAvatarBtn" class="btn-secondary">重置</button>
+                    <button type="button" id="saveAvatarBtn" class="btn-primary">保存</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="app-footer">
+            <p>灵感橙现，一键即达| 让每一份成长都被看见</p>
+        </footer>
+    </div>
+    
+    <script defer src="script.js?v=202402232000"></script>
+</body>
+</html>

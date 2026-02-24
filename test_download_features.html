@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>下载功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        .test-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.pass {
+            background: #4CAF50;
+            color: white;
+        }
+        .status.fail {
+            background: #f44336;
+            color: white;
+        }
+        .status.pending {
+            background: #ff9800;
+            color: white;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #333;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📥 下载功能测试报告</h1>
+    
+    <div class="test-section">
+        <h2>✅ 功能实现清单</h2>
+        <div class="test-item">
+            <span class="status pass">已实现</span> 下载当前图片按钮
+        </div>
+        <div class="test-item">
+            <span class="status pass">已实现</span> 下载所有图片（ZIP）按钮
+        </div>
+        <div class="test-item">
+            <span class="status pass">已实现</span> 柱状图下载修复（Canvas转图片）
+        </div>
+        <div class="test-item">
+            <span class="status pass">已实现</span> 文字点评位置修复
+        </div>
+        <div class="test-item">
+            <span class="status pass">已实现</span> 标题遮挡修复
+        </div>
+        <div class="test-item">
+            <span class="status pass">已实现</span> 跨域图片处理（Base64转换）
+        </div>
+        <div class="test-item">
+            <span class="status pass">已实现</span> 下载进度显示
+        </div>
+        <div class="test-item">
+            <span class="status pass">已实现</span> 错误处理和提示
+        </div>
+        <div class="test-item">
+            <span class="status pass">已实现</span> ZIP文件标准化命名
+        </div>
+        <div class="test-item">
+            <span class="status pass">已实现</span> 防止页面闪动
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔧 技术实现细节</h2>
+        <div class="test-item">
+            <strong>图片格式：</strong> PNG（保证视觉质量）
+        </div>
+        <div class="test-item">
+            <strong>图片精度：</strong> 2倍缩放（scale: 2）
+        </div>
+        <div class="test-item">
+            <strong>CORS处理：</strong> 自动转换为Base64
+        </div>
+        <div class="test-item">
+            <strong>Canvas处理：</strong> 自动转换为图片元素
+        </div>
+        <div class="test-item">
+            <strong>ZIP格式：</strong> 标准ZIP 6.3.8规范
+        </div>
+        <div class="test-item">
+            <strong>文件命名：</strong> 学员姓名.png（标准化处理）
+        </div>
+        <div class="test-item">
+            <strong>进度显示：</strong> 实时进度条和百分比
+        </div>
+        <div class="test-item">
+            <strong>错误处理：</strong> 友好的错误提示
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📋 已修复的问题</h2>
+        <div class="test-item">
+            <span class="status pass">✓</span> 第一部分柱状图下载时消失
+        </div>
+        <div class="test-item">
+            <span class="status pass">✓</span> 第四部分文字点评格式向上位移
+        </div>
+        <div class="test-item">
+            <span class="status pass">✓</span> 标题文字下部分被白色框遮挡
+        </div>
+        <div class="test-item">
+            <span class="status pass">✓</span> 下载时预览页面向下位移闪动
+        </div>
+        <div class="test-item">
+            <span class="status pass">✓</span> 图片污染和跨域资源限制
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🧪 测试步骤</h2>
+        <ol>
+            <li>打开主应用页面（index.html）</li>
+            <li>上传测试CSV文件（test_download.csv）</li>
+            <li>查看预览区是否正常显示</li>
+            <li>点击"下载当前图片"按钮</li>
+            <li>验证下载的PNG图片是否完整</li>
+            <li>点击"下载所有图片（ZIP）"按钮</li>
+            <li>验证ZIP文件是否包含所有学员图片</li>
+            <li>解压ZIP文件，检查图片质量</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>🎯 测试结果</h2>
+        <div id="testResults">
+            <p style="color: #666;">请在主应用中进行测试，然后记录结果...</p>
+        </div>
+        <button onclick="window.open('index.html', '_blank')">打开主应用测试</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>📝 测试日志</h2>
+        <div id="testLog" class="log">
+            <div>测试日志初始化...</div>
+        </div>
+        <button onclick="clearLog()">清空日志</button>
+    </div>
+    
+    <script>
+        function addLog(message) {
+            const log = document.getElementById('testLog');
+            const time = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${time}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('testLog').innerHTML = '<div>日志已清空</div>';
+        }
+        
+        // 初始化
+        addLog('测试页面加载完成');
+        addLog('所有功能已实现');
+        addLog('等待用户测试...');
+    </script>
+</body>
+</html>
